@@ -5,8 +5,8 @@ VERBOSITY_FLAGS:=-Iinclude -std=c++23 -g -Wall -Werror -Wextra -Wpedantic \
 MACROS:=
 PERFORMANCE_MACROS:=
 
-DEPS:=
-OBJS:=main
+DEPS:=board game player ai-player human-player
+OBJS:=main board game player ai-player human-player
 DIRS:=bin obj
 BIN:=bin/main
 
