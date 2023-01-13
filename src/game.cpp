@@ -14,12 +14,13 @@ Game::Game(std::shared_ptr<Player> odd_player, std::shared_ptr<Player> even_play
 
 void Game::start_game() {
     std::cout << players[0]->get_player_name() << " vs " << players[1]->get_player_name() << "\n";
+    std::cout << "\033[s";
 
     board->print_board();
 
     while (board->check_status() == NOT_FINISHED) {
         players[turn]->make_move(*this);
-        board->print_board();
+            board->print_board();
     }
 
     uint8_t status = board->check_status();
