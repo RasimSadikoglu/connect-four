@@ -2,6 +2,18 @@
 
 #include "game.h"
 
-void HumanPlayer::make_move(__attribute__((unused)) Game &game) const {
-    game.make_move(0);
+#include "iostream"
+
+HumanPlayer::HumanPlayer():
+    Player("Human")
+{
+}
+
+void HumanPlayer::make_move(Game &game) const {
+    std::cout << "Select a column: ";
+    
+    int column;
+    std::cin >> column;
+
+    game.make_move(static_cast<uint8_t>(column - 1));
 }

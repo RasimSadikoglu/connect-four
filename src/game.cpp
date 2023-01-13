@@ -13,10 +13,25 @@ Game::Game(std::shared_ptr<Player> odd_player, std::shared_ptr<Player> even_play
 }
 
 void Game::start_game() {
-    std::cout << "Hello\n";
-    players[0]->make_move(*this);
+    std::cout << players[0]->get_player_name() << " vs " << players[1]->get_player_name() << "\n";
+
+    board->print_board();
+
+    while (board->check_status() == NOT_FINISHED) {
+        players[turn]->make_move(*this);
+        board->print_board();
+    }
+
+    uint8_t status = board->check_status();
+
+    if (status == TIE) {
+        std::cout << "Tie\n";
+    } else if (status == FINISHED) {
+        std::cout << "Player " << static_cast<int>((turn ^ true) + 1) << " won!\n";
+    }
 }
 
 void Game::make_move(uint8_t column) {
-    std::cout << "move test " << static_cast<int>(column) << "\n";
+    board->make_move(column);
+    turn ^= true;
 }
