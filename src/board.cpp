@@ -35,22 +35,6 @@ void Board::make_move(uint8_t column) {
     turn ^= true;
 }
 
-void debug_print(std::bitset<56> board) {
-
-    std::bitset<BOARD_SIZE> mask{0x1};
-
-    for (int i = 0; i < BOARD_SIZE; i++) {
-        std::printf("%s", i % BOARD_X == 0 ? "\n" : "|");
-
-        int lookup_value = (board & mask).any();
-        std::printf("%s", cell_values[lookup_value].c_str());
-
-        mask <<= 1;
-    }
-
-    std::printf("\n\n");
-}
-
 uint8_t Board::check_status() const {
     if ((tokens[0] | tokens[1]).count() == BOARD_SIZE) return TIE;
     std::bitset<BOARD_SIZE> mask;

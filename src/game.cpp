@@ -20,7 +20,7 @@ void Game::start_game() {
 
     while (board->check_status() == NOT_FINISHED) {
         players[turn]->make_move(*this);
-            board->print_board();
+        board->print_board();
     }
 
     uint8_t status = board->check_status();
