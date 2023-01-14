@@ -8,9 +8,9 @@
 #define BOARD_SIZE BOARD_X * BOARD_Y
 
 enum GameStatus {
-    NOT_FINISHED,
+    TIE,
     FINISHED,
-    TIE
+    NOT_FINISHED
 };
 
 class Board {
