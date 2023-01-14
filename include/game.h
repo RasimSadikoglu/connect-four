@@ -16,5 +16,5 @@ public:
     void start_game();
     void make_move(uint8_t column);
 
-    std::shared_ptr<const Board> get_board() const;
+    std::shared_ptr<Board> get_board() const;
 };

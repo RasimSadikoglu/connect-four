@@ -7,8 +7,10 @@
 class Board;
 
 class AIPlayer: public Player {
+private:
+    uint8_t depth;
 public:
-    AIPlayer();
+    AIPlayer(uint8_t d);
     void make_move(Game &game) const override;
 private:
     // uint8_t find_next_move(std::shared_ptr<Board> board, uint8_t depth, double score) const;

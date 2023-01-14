@@ -37,7 +37,6 @@ void Game::make_move(uint8_t column) {
     turn ^= true;
 }
 
-std::shared_ptr<const Board> Game::get_board() const
-{
-    return this->board;
+std::shared_ptr<Board> Game::get_board() const {
+    return std::make_shared<Board>(*board);
 }

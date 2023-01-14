@@ -11,19 +11,9 @@ static const std::array<const std::string, 3> cell_values = {"   ", RED " o " CL
 
 Board::Board():
     tokens{{0x0, 0x0}},
-    turn{false}
-{
-}
-
-Board::Board(std::bitset<BOARD_SIZE> odd_tokens, std::bitset<BOARD_SIZE> even_tokens):
-    tokens{{odd_tokens, even_tokens}},
-    turn{odd_tokens.count() != even_tokens.count()}
-{
-}
-
-Board::Board(const Board &board): 
-    tokens{{board.tokens[0], board.tokens[1]}},
-    turn{board.turn}
+    move_stack{{}},
+    column_counts{{}},
+    turn_count{0}
 {
 }
 
@@ -31,27 +21,29 @@ void Board::make_move(uint8_t column)
 {
     if (column >= BOARD_X) throw std::invalid_argument("Column value is out of bound!");
 
-    auto merged_board = tokens[0] | tokens[1];
+    uint8_t depth = BOARD_Y - column_counts[column] - 1;
+    if (depth == 0xff) throw std::invalid_argument("Non-empty column!");
 
-    std::bitset<BOARD_SIZE> mask{0x1};
-    mask <<= (BOARD_X * (BOARD_Y - 1)) + column;
+    bool turn = turn_count % 2;
+    tokens[turn].set((BOARD_X * (depth)) + column);
+    
+    column_counts[column]++;
+    move_stack[turn_count] = column;
+    turn_count++;
+}
 
-    int count; for (count = 0; count < BOARD_Y; count++) {
-        if ((mask & merged_board).none()) break;
+void Board::undo_move()
+{
+    bool turn = !(turn_count % 2);
 
-        mask >>= BOARD_X;
-    }
+    if (turn_count == 0) throw std::invalid_argument("No moves have been made!");
 
-    if (count == BOARD_Y) throw std::invalid_argument("Non-empty column!");
+    turn_count--;
+    uint8_t column = move_stack[turn_count];
+    uint8_t depth = BOARD_Y - column_counts[column];
+    column_counts[column]--;
 
-    count = BOARD_Y - count - 1;
-
-    mask = 0x1;
-    mask <<= (count * BOARD_X) + column;
-
-    tokens[turn] |= mask;
-
-    turn ^= true;
+    tokens[turn].reset((BOARD_X * (depth)) + column);
 }
 
 std::array<std::bitset<BOARD_SIZE>, 2> Board::get_tokens() const {
@@ -59,21 +51,33 @@ std::array<std::bitset<BOARD_SIZE>, 2> Board::get_tokens() const {
 }
 
 bool Board::is_valid_move(uint8_t column) const {
-    if (column >= BOARD_X) return false;
+    return column_counts[column] != BOARD_Y;
+}
 
-    auto merged_tokens = tokens[0] | tokens[1];
-    auto mask = std::bitset<BOARD_SIZE>(0x1);
-    mask <<= column;
+void debug_print(std::bitset<56> board) {
 
-    return (merged_tokens & mask).none();
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        std::printf("%s", i % BOARD_X == 0 ? "\n" : "|");
+
+        int lookup_value = board[i];
+        std::printf("%s", cell_values[lookup_value].c_str());
+    }
+
+    std::printf("\n\n");
 }
 
 uint8_t Board::check_status() const {
-    if ((tokens[0] | tokens[1]).count() == BOARD_SIZE) return TIE;
-    std::bitset<BOARD_SIZE> mask;
-    uint8_t loop_count = 0;
 
-    auto player_tokens = tokens[turn ^ true];
+    if (turn_count < 1) return NOT_FINISHED;
+    if (turn_count == BOARD_SIZE) return TIE; 
+
+    auto player_tokens = tokens[!(turn_count % 2)];
+
+    __attribute_maybe_unused__ uint8_t column = move_stack[turn_count - 1];
+    __attribute_maybe_unused__ uint8_t depth = BOARD_Y - column_counts[column];
+
+    std::bitset<BOARD_SIZE> mask;
+    uint8_t loop_count;
 
     /* #region: horizontal */
     mask = 0xf;
@@ -132,15 +136,11 @@ void Board::print_board() const {
     auto odd_tokens = tokens[0];
     auto even_tokens = tokens[1];
 
-    std::bitset<BOARD_SIZE> mask{0x1};
-
     for (int i = 0; i < BOARD_SIZE; i++) {
         std::printf("%s", i % BOARD_X == 0 ? "\n" : "|");
 
-        int lookup_value = (odd_tokens & mask).any() + (even_tokens & mask).any() * 2;
+        int lookup_value = odd_tokens[i] + even_tokens[i] * 2;
         std::printf("%s", cell_values[lookup_value].c_str());
-
-        mask <<= 1;
     }
 
     std::printf("\n\n");

@@ -2,6 +2,7 @@
 
 #include <bitset>
 #include <array>
+#include <stack>
 
 #define BOARD_X 8
 #define BOARD_Y 7
@@ -16,13 +17,14 @@ enum GameStatus {
 class Board {
 private:
     std::array<std::bitset<BOARD_SIZE>, 2> tokens;
-    bool turn;
+    std::array<uint8_t, BOARD_SIZE> move_stack;
+    std::array<uint8_t, BOARD_X> column_counts;
+    uint8_t turn_count;
 public:
     Board();
-    Board(std::bitset<BOARD_SIZE> odd_tokens, std::bitset<BOARD_SIZE> even_tokens);
-    Board(const Board &board);
 
     void make_move(uint8_t column);
+    void undo_move();
     
     bool is_valid_move(uint8_t column) const;
     std::array<std::bitset<BOARD_SIZE>, 2> get_tokens() const;
