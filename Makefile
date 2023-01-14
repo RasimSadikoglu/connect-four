@@ -1,5 +1,5 @@
 CXX:=g++
-VERBOSITY_FLAGS:=-Iinclude -std=c++23 -g -Wall -Werror -Wextra -Wpedantic \
+VERBOSITY_FLAGS:=-Iinclude -std=c++23 -Ofast -Wall -Werror -Wextra -Wpedantic \
 	-Wconversion -Wcast-align -Wunused -Wpointer-arith -Wcast-qual \
 	-Wno-missing-braces -Wold-style-cast -Wshadow
 MACROS:=
