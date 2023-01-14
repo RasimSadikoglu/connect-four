@@ -15,4 +15,6 @@ public:
     Game(std::shared_ptr<Player> odd_player, std::shared_ptr<Player> even_player);
     void start_game();
     void make_move(uint8_t column);
+
+    std::shared_ptr<const Board> get_board() const;
 };

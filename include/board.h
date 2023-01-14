@@ -18,7 +18,14 @@ private:
     std::array<std::bitset<BOARD_SIZE>, 2> tokens;
     bool turn;
 public:
+    Board();
+    Board(std::bitset<BOARD_SIZE> odd_tokens, std::bitset<BOARD_SIZE> even_tokens);
+    Board(const Board &board);
+
     void make_move(uint8_t column);
+    
+    bool is_valid_move(uint8_t column) const;
+    std::array<std::bitset<BOARD_SIZE>, 2> get_tokens() const;
     uint8_t check_status() const;
     void print_board() const;
 };

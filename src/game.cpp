@@ -36,3 +36,8 @@ void Game::make_move(uint8_t column) {
     board->make_move(column);
     turn ^= true;
 }
+
+std::shared_ptr<const Board> Game::get_board() const
+{
+    return this->board;
+}

@@ -9,7 +9,26 @@
 
 static const std::array<const std::string, 3> cell_values = {"   ", RED " o " CLEAR, YELLOW " o " CLEAR};
 
-void Board::make_move(uint8_t column) {
+Board::Board():
+    tokens{{0x0, 0x0}},
+    turn{false}
+{
+}
+
+Board::Board(std::bitset<BOARD_SIZE> odd_tokens, std::bitset<BOARD_SIZE> even_tokens):
+    tokens{{odd_tokens, even_tokens}},
+    turn{odd_tokens.count() != even_tokens.count()}
+{
+}
+
+Board::Board(const Board &board): 
+    tokens{{board.tokens[0], board.tokens[1]}},
+    turn{board.turn}
+{
+}
+
+void Board::make_move(uint8_t column)
+{
     if (column >= BOARD_X) throw std::invalid_argument("Column value is out of bound!");
 
     auto merged_board = tokens[0] | tokens[1];
@@ -33,6 +52,20 @@ void Board::make_move(uint8_t column) {
     tokens[turn] |= mask;
 
     turn ^= true;
+}
+
+std::array<std::bitset<BOARD_SIZE>, 2> Board::get_tokens() const {
+    return {tokens[0], tokens[1]};
+}
+
+bool Board::is_valid_move(uint8_t column) const {
+    if (column >= BOARD_X) return false;
+
+    auto merged_tokens = tokens[0] | tokens[1];
+    auto mask = std::bitset<BOARD_SIZE>(0x1);
+    mask <<= column;
+
+    return (merged_tokens & mask).none();
 }
 
 uint8_t Board::check_status() const {
