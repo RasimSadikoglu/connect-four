@@ -6,7 +6,7 @@
 #include <vector>
 #include <random>
 
-#define DEPTH_LIMIT 12
+#define DEPTH_LIMIT 9
 
 AIPlayer::AIPlayer():
     Player("AI")
@@ -35,7 +35,7 @@ double min_utility(std::shared_ptr<const Board> board, const uint8_t limit, cons
         double score = max_utility(new_board, limit, depth + 1, min_value);
         min_value = std::min(min_value, score);
 
-        if (score <= max_value) return min_value;
+        if (score < max_value) return min_value;
     }
 
     return min_value;
@@ -60,7 +60,7 @@ double max_utility(std::shared_ptr<const Board> board, const uint8_t limit, cons
         double score = min_utility(new_board, limit, depth + 1, max_value);
         max_value = std::max(max_value, score);
 
-        if (score >= min_value) return max_value;
+        if (score > min_value) return max_value;
     }
 
     return max_value;

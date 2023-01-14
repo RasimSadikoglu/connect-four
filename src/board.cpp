@@ -126,8 +126,8 @@ uint8_t Board::check_status() const {
 
 void Board::print_board() const {
 
-    // std::printf("\033[u");
-    // std::printf("\033[0J");
+    std::printf("\033[u");
+    std::printf("\033[0J");
 
     auto odd_tokens = tokens[0];
     auto even_tokens = tokens[1];
