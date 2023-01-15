@@ -21,6 +21,7 @@ void Game::start_game() {
 
     // Game loop, every player plays when their turn is came.
     while (board->check_status() == NOT_FINISHED) {
+        std::cout << "Player " << static_cast<int>(turn + 1) << "'s turn!\n";
         players[turn]->make_move(*this);
         board->print_board();
     }

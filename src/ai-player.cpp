@@ -68,7 +68,7 @@ uint8_t AIPlayer::find_next_move(std::shared_ptr<Board> b) {
         depth--;
         board->undo_move();
 
-        printf("score: %.4lf, c: %d\n", score, static_cast<int>(c));
+        printf("The score for column #%d: %.4lf\n", static_cast<int>(c + 1), score);
         
         // If new score is bigger than moximum reset the possible move list. Otherwise, 
         // if it is equal to the max score add it to the list. 
@@ -156,7 +156,10 @@ std::pair<bool, double> AIPlayer::heuristic_1() const {
     uint8_t board_status = board->check_status();
 
     if (board_status != NOT_FINISHED) {
-        return {true, (-1 * turn) * static_cast<double>(board_status) / depth};
+        double score = static_cast<double>(board_status) / depth;
+        if (turn) score *= -1;
+
+        return {true, score};
     }
 
     if (depth == depth_limit) return {true, 0};
@@ -182,7 +185,10 @@ std::pair<bool, double> AIPlayer::heuristic_2() const {
     uint8_t board_status = board->check_status();
 
     if (board_status != NOT_FINISHED) {
-        return {true, (-1 * turn) * static_cast<double>(board_status)};
+        double score = static_cast<double>(board_status);
+        if (turn) score *= -1;
+
+        return {true, score};
     }
 
     if (depth != depth_limit) return {false, 0};
@@ -210,7 +216,10 @@ std::pair<bool, double> AIPlayer::heuristic_2() const {
 
     bool player_turn = tokens[0].count() == tokens[1].count();
 
-    return {true, (-1 * (player_turn ^ turn)) * (scores[0] - scores[1]) / (BOARD_SIZE * 8)};
+    double score = (scores[0] - scores[1]) / (BOARD_SIZE * 8);
+    if (player_turn ^ turn) score *= -1;
+
+    return {true, score};
 }
 
 /*
@@ -241,7 +250,10 @@ std::pair<bool, double> AIPlayer::heuristic_3() const {
     uint8_t board_status = board->check_status();
 
     if (board_status != NOT_FINISHED) {
-        return {true, (-1 * turn) * static_cast<double>(board_status)};
+        double score = static_cast<double>(board_status);
+        if (turn) score *= -1;
+
+        return {true, score};
     }
 
     if (depth != depth_limit) return {false, 0};
@@ -261,5 +273,8 @@ std::pair<bool, double> AIPlayer::heuristic_3() const {
 
     bool player_turn = tokens[0].count() == tokens[1].count();
 
-    return {true, (-1 * (player_turn ^ turn)) * (scores[0] - scores[1]) / (BOARD_SIZE * 7)};
+    double score = (scores[0] - scores[1]) / (BOARD_SIZE * 7);
+    if (player_turn ^ turn) score *= -1;
+
+    return {true, score};
 }

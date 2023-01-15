@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #define RED "\033[91m"
+#define GREEN "\033[92m"
 #define BOLD_UNDERLINE "\033[1;4m"
 #define YELLOW "\033[93m"
 #define CLEAR "\033[0m"
@@ -144,6 +145,12 @@ void Board::print_board() const {
 
     auto odd_tokens = tokens[0];
     auto even_tokens = tokens[1];
+
+    std::printf("\n");
+
+    for (int i = 0; i < BOARD_X; i++) {
+        std::printf(GREEN " %d  " CLEAR, i + 1);
+    }
 
     for (int i = 0; i < BOARD_SIZE; i++) {
         std::printf("%s", i % BOARD_X == 0 ? "\n" : "|");
