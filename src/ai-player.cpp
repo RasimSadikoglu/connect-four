@@ -5,67 +5,47 @@
 
 #include <vector>
 #include <random>
+#include <functional>
+#include <iostream>
 
-AIPlayer::AIPlayer(uint8_t d):
-    Player("AI"),
-    depth{d}
+AIPlayer::AIPlayer():
+    Player("AI")
 {
+    std::cout << "Choose a depth (4-9 is suggested): ";
+    int d;
+    std::cin >> d;
+    depth_limit = static_cast<uint8_t>(8);
+    std::cout << "\033[u";
+    std::cout << "\033[0J";
+
+    std::cout << "Choose a heuristic:\n";
+    std::cout << "1) Make closest best move\n";
+    std::cout << "2) ???\n";
+    std::cout << "3) ???\n";
+    int h;
+    std::cin >> h;
+    std::cout << "\033[u";
+    std::cout << "\033[0J";
+
+    std::array<std::pair<bool, double> (AIPlayer::*)() const, 3> heuristic_table = {
+        &AIPlayer::heuristic_1,
+        &AIPlayer::heuristic_2,
+        &AIPlayer::heuristic_3
+    };
+
+    heuristic_func = heuristic_table[h - 1];
 }
 
-double max_utility(std::shared_ptr<Board> board, const uint8_t limit, const uint8_t depth, const double min_value);
-double min_utility(std::shared_ptr<Board> board, const uint8_t limit, const uint8_t depth, const double max_value);
-
-double min_utility(std::shared_ptr<Board> board, const uint8_t limit, const uint8_t depth, const double max_value) {
-    int8_t board_status = board->check_status();
-
-    if (board_status != NOT_FINISHED) {
-        return board_status * (1.0 / depth);
-    }
-
-    if (depth == limit) return 0;
-
-    double min_value = 1;
-    for (uint8_t c = 0; c < BOARD_X; c++) {
-        if (!board->is_valid_move(c)) continue;
-
-        board->make_move(c);
-        double score = max_utility(board, limit, depth + 1, min_value);
-        board->undo_move();
-
-        min_value = std::min(min_value, score);
-
-        if (score < max_value) return min_value;
-    }
-
-    return min_value;
+void AIPlayer::make_move(Game &game) {
+    game.make_move(find_next_move(game.get_board()));
 }
 
-double max_utility(std::shared_ptr<Board> board, const uint8_t limit, const uint8_t depth, const double min_value) {
-    int8_t board_status = board->check_status();
+uint8_t AIPlayer::find_next_move(std::shared_ptr<Board> b) {
 
-    if (board_status != NOT_FINISHED) {
-        return board_status * -1 * (1.0 / depth);
-    }
+    this->board = b;
+    this->depth = 0;
+    this->turn = true;
 
-    if (depth == limit) return 0;
-
-    double max_value = -1;
-    for (uint8_t c = 0; c < BOARD_X; c++) {
-        if (!board->is_valid_move(c)) continue;
-
-        board->make_move(c);
-        double score = min_utility(board, limit, depth + 1, max_value);
-        board->undo_move();
-
-        max_value = std::max(max_value, score);
-
-        if (score > min_value) return max_value;
-    }
-
-    return max_value;
-}
-
-uint8_t find_next_move(std::shared_ptr<Board> board, const uint8_t limit, const uint8_t depth) {
     std::vector<uint8_t> possible_moves;
     double max_score = -1;
 
@@ -73,7 +53,11 @@ uint8_t find_next_move(std::shared_ptr<Board> board, const uint8_t limit, const 
         if (!board->is_valid_move(c)) continue;
 
         board->make_move(c);
-        double score = min_utility(board, limit, depth + 1, max_score);
+        depth++;
+        this->turn ^= true;
+        double score = min_utility(max_score);
+        this->turn ^= true;
+        depth--;
         board->undo_move();
 
         printf("score: %.4lf, c: %d\n", score, static_cast<int>(c));
@@ -97,21 +81,72 @@ uint8_t find_next_move(std::shared_ptr<Board> board, const uint8_t limit, const 
     return possible_moves[distribution(generator)];
 }
 
-void AIPlayer::make_move(Game &game) const {
-    game.make_move(find_next_move(game.get_board(), depth, 0));
+double AIPlayer::min_utility(const double max_value) {
+    auto heuristic = (this->*heuristic_func)();
+
+    if (heuristic.first) return heuristic.second;
+
+    double min_value = 1;
+    for (uint8_t c = 0; c < BOARD_X; c++) {
+        if (!board->is_valid_move(c)) continue;
+
+        board->make_move(c);
+        depth++;
+        this->turn ^= true;
+        double score = max_utility(min_value);
+        this->turn ^= true;
+        depth--;
+        board->undo_move();
+
+        min_value = std::min(min_value, score);
+
+        if (score < max_value) return min_value;
+    }
+
+    return min_value;
 }
 
-double AIPlayer::heuristic_1(__attribute_maybe_unused__ std::shared_ptr<Board> board) const
-{
-    return 0;
+double AIPlayer::max_utility(const double min_value) {
+    auto heuristic = (this->*heuristic_func)();
+
+    if (heuristic.first) return heuristic.second;
+
+    double max_value = -1;
+    for (uint8_t c = 0; c < BOARD_X; c++) {
+        if (!board->is_valid_move(c)) continue;
+
+        board->make_move(c);
+        depth++;
+        this->turn ^= true;
+        double score = min_utility(max_value);
+        this->turn ^= true;
+        depth--;
+        board->undo_move();
+
+        max_value = std::max(max_value, score);
+
+        if (score > min_value) return max_value;
+    }
+
+    return max_value;
 }
 
-double AIPlayer::heuristic_2(__attribute_maybe_unused__ std::shared_ptr<Board> board) const
-{
-    return 0;
+std::pair<bool, double> AIPlayer::heuristic_1() const {
+    int8_t board_status = board->check_status();
+
+    if (board_status != NOT_FINISHED) {
+        return {true, (-1 * turn) * static_cast<double>(board_status) / depth};
+    }
+
+    if (depth == depth_limit) return {true, 0};
+
+    return {false, 0};
 }
 
-double AIPlayer::heuristic_3(__attribute_maybe_unused__ std::shared_ptr<Board> board) const
-{
-    return 0;
+std::pair<bool, double> AIPlayer::heuristic_2() const {
+    return {};
+}
+
+std::pair<bool, double> AIPlayer::heuristic_3() const {
+    return {};
 }

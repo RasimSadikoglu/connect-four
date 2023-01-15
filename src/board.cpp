@@ -25,7 +25,7 @@ void Board::make_move(uint8_t column)
     if (depth == 0xff) throw std::invalid_argument("Non-empty column!");
 
     bool turn = turn_count % 2;
-    tokens[turn].set((BOARD_X * (depth)) + column);
+    tokens[turn].set((BOARD_X * depth) + column);
     
     column_counts[column]++;
     move_stack[turn_count] = column;
@@ -43,7 +43,7 @@ void Board::undo_move()
     uint8_t depth = BOARD_Y - column_counts[column];
     column_counts[column]--;
 
-    tokens[turn].reset((BOARD_X * (depth)) + column);
+    tokens[turn].reset((BOARD_X * depth) + column);
 }
 
 std::array<std::bitset<BOARD_SIZE>, 2> Board::get_tokens() const {
