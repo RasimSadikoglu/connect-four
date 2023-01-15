@@ -11,6 +11,8 @@ int main() {
     std::cout << "\033[s";
 
     for (int i = 0; i < 2; i++) {
+
+        // Print the main menu.
         std::cout << "Choose the " << _[i] << " player\n";
         std::cout << "1) Human\n";
         std::cout << "2) AI\n";
@@ -23,6 +25,7 @@ int main() {
         std::cout << "\033[u";
         std::cout << "\033[0J";
 
+        // Create players by the choice the constructor of the players propmts for the necessary options.
         if (choice == 1) {
             players[i] = std::make_shared<HumanPlayer>(HumanPlayer());
         } else if (choice == 2) {
@@ -32,6 +35,7 @@ int main() {
         }
     }
 
+    // Create and start the game with the players.
     Game game = Game(players[0], players[1]);
     game.start_game();
 }

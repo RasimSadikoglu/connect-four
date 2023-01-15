@@ -43,26 +43,35 @@ void AIPlayer::make_move(Game &game) {
 
 uint8_t AIPlayer::find_next_move(std::shared_ptr<Board> b) {
 
+    // Initialize required variables for evolution.
     this->board = b;
     this->depth = 0;
     this->turn = true;
 
+    // If there are multiple moves in the same score, put them into a list 
+    // and randomly choose a move.
     std::vector<uint8_t> possible_moves;
     double max_score = -1;
 
+    // Loop over every column and check the score.
     for (uint8_t c = 0; c < BOARD_X; c++) {
         if (!board->is_valid_move(c)) continue;
 
+        // Call the min utility function also make some preperations.
         board->make_move(c);
         depth++;
         this->turn ^= true;
         double score = min_utility(max_score);
+
+        // Reset back the states to the condition before utility function is called.
         this->turn ^= true;
         depth--;
         board->undo_move();
 
         printf("score: %.4lf, c: %d\n", score, static_cast<int>(c));
         
+        // If new score is bigger than moximum reset the possible move list. Otherwise, 
+        // if it is equal to the max score add it to the list. 
         if (score > max_score) {
             max_score = score;
             possible_moves.clear();
@@ -71,6 +80,7 @@ uint8_t AIPlayer::find_next_move(std::shared_ptr<Board> b) {
             possible_moves.push_back(c);
         }
 
+        // If there are a winning move return with that column.
         if (score == 1) {
             return c;
         }
@@ -82,9 +92,13 @@ uint8_t AIPlayer::find_next_move(std::shared_ptr<Board> b) {
     return possible_moves[distribution(generator)];
 }
 
+/*
+    Somewhat same with the function above.
+*/
 double AIPlayer::min_utility(const double max_value) {
     auto heuristic = (this->*heuristic_func)();
 
+    // Call the heuristic function and return if depth limit is reached or the game is ended.
     if (heuristic.first) return heuristic.second;
 
     double min_value = 1;
@@ -107,6 +121,9 @@ double AIPlayer::min_utility(const double max_value) {
     return min_value;
 }
 
+/*
+Same function as above just the maximum one.
+*/
 double AIPlayer::max_utility(const double min_value) {
     auto heuristic = (this->*heuristic_func)();
 
@@ -132,6 +149,9 @@ double AIPlayer::max_utility(const double min_value) {
     return max_value;
 }
 
+/*
+    A simple heuristic that only checks for if the game ended or not. Additional explanation is on the report.
+*/
 std::pair<bool, double> AIPlayer::heuristic_1() const {
     uint8_t board_status = board->check_status();
 
@@ -144,6 +164,9 @@ std::pair<bool, double> AIPlayer::heuristic_1() const {
     return {false, 0};
 }
 
+/*
+    If a index is out of bound return false. Otherwise check if there is a token in that location.
+*/
 static bool check_token_with_boundry_control(std::bitset<BOARD_SIZE> tokens, uint8_t i, uint8_t j) {
     if (i >= BOARD_Y || j >= BOARD_X) return false;
 
@@ -152,6 +175,9 @@ static bool check_token_with_boundry_control(std::bitset<BOARD_SIZE> tokens, uin
     return tokens[location];
 }
 
+/*
+    Count the number of neighbors. Additional explanation is on the report.
+*/
 std::pair<bool, double> AIPlayer::heuristic_2() const {
     uint8_t board_status = board->check_status();
 
@@ -187,6 +213,9 @@ std::pair<bool, double> AIPlayer::heuristic_2() const {
     return {true, (-1 * (player_turn ^ turn)) * (scores[0] - scores[1]) / (BOARD_SIZE * 8)};
 }
 
+/*
+    A dfs function for the tokens.
+*/
 double dfs(std::bitset<BOARD_SIZE> tokens, uint8_t index, uint8_t depth, std::bitset<BOARD_SIZE> &visited) {
 
     if (visited[index] || !tokens[index]) return 0;
@@ -197,10 +226,6 @@ double dfs(std::bitset<BOARD_SIZE> tokens, uint8_t index, uint8_t depth, std::bi
 
     double score = depth;
 
-    score += check_token_with_boundry_control(tokens, i - 1, j - 1)  ? dfs(tokens, index - BOARD_X - 1, depth * 2, visited) : 0;
-    score += check_token_with_boundry_control(tokens, i - 1, j)      ? dfs(tokens, index - BOARD_X,     depth * 2, visited) : 0;
-    score += check_token_with_boundry_control(tokens, i - 1, j + 1)  ? dfs(tokens, index - BOARD_X + 1, depth * 2, visited) : 0;
-    score += check_token_with_boundry_control(tokens, i, j - 1)      ? dfs(tokens, index - 1,           depth * 2, visited) : 0;
     score += check_token_with_boundry_control(tokens, i, j + 1)      ? dfs(tokens, index + 1,           depth * 2, visited) : 0;
     score += check_token_with_boundry_control(tokens, i + 1, j - 1)  ? dfs(tokens, index + BOARD_X - 1, depth * 2, visited) : 0;
     score += check_token_with_boundry_control(tokens, i + 1, j)      ? dfs(tokens, index + BOARD_X,     depth * 2, visited) : 0;
@@ -209,6 +234,9 @@ double dfs(std::bitset<BOARD_SIZE> tokens, uint8_t index, uint8_t depth, std::bi
     return score;
 }
 
+/*
+    A heuristic that checks trees on the board and score them accordingly. Additional explanation is on the report.
+*/
 std::pair<bool, double> AIPlayer::heuristic_3() const {
     uint8_t board_status = board->check_status();
 
@@ -220,6 +248,8 @@ std::pair<bool, double> AIPlayer::heuristic_3() const {
 
     auto tokens = board->get_tokens();
     std::array<double, 2> scores = {0, 0};
+
+    // A visited array for the graph search.
     std::bitset<BOARD_SIZE> visited{0x0};
 
     for (uint8_t i = 0; i < 2; i++) {

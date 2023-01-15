@@ -7,12 +7,6 @@
 HumanPlayer::HumanPlayer():
     Player("Human")
 {
-    std::cout << "Player name: ";
-    std::string name;
-    std::cin >> name;
-
-    std::cout << "\033[u";
-    std::cout << "\033[0J";
 }
 
 void HumanPlayer::make_move(Game &game) {

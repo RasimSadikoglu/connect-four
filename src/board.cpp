@@ -20,19 +20,27 @@ Board::Board():
 
 void Board::make_move(uint8_t column)
 {
+    // Check for column boundry.
     if (column >= BOARD_X) throw std::invalid_argument("Column value is out of bound!");
 
+    // Check if the column is not full.
     uint8_t depth = BOARD_Y - column_counts[column] - 1;
     if (depth == 0xff) throw std::invalid_argument("Non-empty column!");
 
+    // Find which player's turn and add a token for that player.
     bool turn = turn_count % 2;
     tokens[turn].set((BOARD_X * depth) + column);
     
+    // Update the history.
     column_counts[column]++;
     move_stack[turn_count] = column;
     turn_count++;
 }
 
+/*
+This function is only used on evolution tree in order to avoid copying the board 
+over and over again, it is not used on normal gameplay.
+*/
 void Board::undo_move()
 {
     bool turn = !(turn_count % 2);
@@ -55,27 +63,15 @@ bool Board::is_valid_move(uint8_t column) const {
     return column_counts[column] != BOARD_Y;
 }
 
-void debug_print(std::bitset<56> board) {
-
-    for (int i = 0; i < BOARD_SIZE; i++) {
-        std::printf("%s", i % BOARD_X == 0 ? "\n" : "|");
-
-        int lookup_value = board[i];
-        std::printf("%s", cell_values[lookup_value].c_str());
-    }
-
-    std::printf("\n\n");
-}
-
 uint8_t Board::check_status() {
 
+    // Initial simple checks, if there are less than 7 moves have been made, 
+    // the game must be in the not finished state. If There are BOARD_SIZE 
+    // amount of tokens, that means the game is ended in a tie
     if (turn_count < 7) return NOT_FINISHED;
     if (turn_count == BOARD_SIZE) return TIE; 
 
     auto player_tokens = tokens[!(turn_count % 2)];
-
-    __attribute_maybe_unused__ uint8_t column = move_stack[turn_count - 1];
-    __attribute_maybe_unused__ uint8_t depth = BOARD_Y - column_counts[column];
 
     std::bitset<BOARD_SIZE> mask;
     uint8_t loop_count;
