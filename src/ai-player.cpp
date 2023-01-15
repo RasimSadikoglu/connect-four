@@ -14,7 +14,7 @@ AIPlayer::AIPlayer():
     std::cout << "Choose a depth (4-9 is suggested): ";
     int d;
     std::cin >> d;
-    depth_limit = static_cast<uint8_t>(8);
+    depth_limit = static_cast<uint8_t>(d);
     std::cout << "\033[u";
     std::cout << "\033[0J";
 
@@ -132,7 +132,7 @@ double AIPlayer::max_utility(const double min_value) {
 }
 
 std::pair<bool, double> AIPlayer::heuristic_1() const {
-    int8_t board_status = board->check_status();
+    uint8_t board_status = board->check_status();
 
     if (board_status != NOT_FINISHED) {
         return {true, (-1 * turn) * static_cast<double>(board_status) / depth};
@@ -143,8 +143,47 @@ std::pair<bool, double> AIPlayer::heuristic_1() const {
     return {false, 0};
 }
 
+static bool check_token_with_boundry_control(std::bitset<BOARD_SIZE> tokens, int i, int j) {
+    if (i < 0 || i >= BOARD_Y || j < 0 || j >= BOARD_X) return false;
+
+    int location = i * BOARD_X + j;
+
+    return tokens[location];
+}
+
 std::pair<bool, double> AIPlayer::heuristic_2() const {
-    return {};
+    uint8_t board_status = board->check_status();
+
+    if (board_status != NOT_FINISHED) {
+        return {true, (-1 * turn) * static_cast<double>(board_status)};
+    }
+
+    if (depth != depth_limit) return {false, 0};
+
+    auto tokens = board->get_tokens();
+    std::array<double, 2> scores = {0, 0};
+
+    for (int k = 0; k < 2; k++) {
+        auto player_tokens = tokens[k];
+        for (int i = 0; i < BOARD_Y; i++) {
+            for (int j = 0; j < BOARD_X; j++) {   
+                if (!player_tokens[i * BOARD_X + BOARD_Y]) continue;
+
+                scores[k] += check_token_with_boundry_control(player_tokens, i - 1, j - 1);
+                scores[k] += check_token_with_boundry_control(player_tokens, i - 1, j);
+                scores[k] += check_token_with_boundry_control(player_tokens, i - 1, j + 1);
+                scores[k] += check_token_with_boundry_control(player_tokens, i, j - 1);
+                scores[k] += check_token_with_boundry_control(player_tokens, i, j + 1);
+                scores[k] += check_token_with_boundry_control(player_tokens, i + 1, j - 1);
+                scores[k] += check_token_with_boundry_control(player_tokens, i + 1, j);
+                scores[k] += check_token_with_boundry_control(player_tokens, i + 1, j + 1);
+            }
+        }
+    }
+
+    bool player_turn = tokens[0].count() == tokens[1].count();
+
+    return {true, (-1 * (player_turn ^ turn)) * (scores[0] - scores[1]) / (BOARD_SIZE)};
 }
 
 std::pair<bool, double> AIPlayer::heuristic_3() const {
