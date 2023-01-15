@@ -144,10 +144,10 @@ std::pair<bool, double> AIPlayer::heuristic_1() const {
     return {false, 0};
 }
 
-static bool check_token_with_boundry_control(std::bitset<BOARD_SIZE> tokens, int i, int j) {
-    if (i < 0 || i >= BOARD_Y || j < 0 || j >= BOARD_X) return false;
+static bool check_token_with_boundry_control(std::bitset<BOARD_SIZE> tokens, uint8_t i, uint8_t j) {
+    if (i >= BOARD_Y || j >= BOARD_X) return false;
 
-    int location = i * BOARD_X + j;
+    uint8_t location = static_cast<uint8_t>(i * BOARD_X + j);
 
     return tokens[location];
 }
@@ -164,10 +164,10 @@ std::pair<bool, double> AIPlayer::heuristic_2() const {
     auto tokens = board->get_tokens();
     std::array<double, 2> scores = {0, 0};
 
-    for (int k = 0; k < 2; k++) {
+    for (uint8_t k = 0; k < 2; k++) {
         auto player_tokens = tokens[k];
-        for (int i = 0; i < BOARD_Y; i++) {
-            for (int j = 0; j < BOARD_X; j++) {   
+        for (uint8_t i = 0; i < BOARD_Y; i++) {
+            for (uint8_t j = 0; j < BOARD_X; j++) {   
                 if (!player_tokens[i * BOARD_X + BOARD_Y]) continue;
 
                 scores[k] += check_token_with_boundry_control(player_tokens, i - 1, j - 1);
@@ -187,6 +187,49 @@ std::pair<bool, double> AIPlayer::heuristic_2() const {
     return {true, (-1 * (player_turn ^ turn)) * (scores[0] - scores[1]) / (BOARD_SIZE * 8)};
 }
 
+double dfs(std::bitset<BOARD_SIZE> tokens, uint8_t index, uint8_t depth, std::bitset<BOARD_SIZE> &visited) {
+
+    if (visited[index] || !tokens[index]) return 0;
+
+    visited.set(index);
+
+    uint8_t i = index / BOARD_X, j = index % BOARD_X;
+
+    double score = depth;
+
+    score += check_token_with_boundry_control(tokens, i - 1, j - 1)  ? dfs(tokens, index - BOARD_X - 1, depth * 2, visited) : 0;
+    score += check_token_with_boundry_control(tokens, i - 1, j)      ? dfs(tokens, index - BOARD_X,     depth * 2, visited) : 0;
+    score += check_token_with_boundry_control(tokens, i - 1, j + 1)  ? dfs(tokens, index - BOARD_X + 1, depth * 2, visited) : 0;
+    score += check_token_with_boundry_control(tokens, i, j - 1)      ? dfs(tokens, index - 1,           depth * 2, visited) : 0;
+    score += check_token_with_boundry_control(tokens, i, j + 1)      ? dfs(tokens, index + 1,           depth * 2, visited) : 0;
+    score += check_token_with_boundry_control(tokens, i + 1, j - 1)  ? dfs(tokens, index + BOARD_X - 1, depth * 2, visited) : 0;
+    score += check_token_with_boundry_control(tokens, i + 1, j)      ? dfs(tokens, index + BOARD_X,     depth * 2, visited) : 0;
+    score += check_token_with_boundry_control(tokens, i + 1, j + 1)  ? dfs(tokens, index + BOARD_X + 1, depth * 2, visited) : 0;
+
+    return score;
+}
+
 std::pair<bool, double> AIPlayer::heuristic_3() const {
-    return {};
+    uint8_t board_status = board->check_status();
+
+    if (board_status != NOT_FINISHED) {
+        return {true, (-1 * turn) * static_cast<double>(board_status)};
+    }
+
+    if (depth != depth_limit) return {false, 0};
+
+    auto tokens = board->get_tokens();
+    std::array<double, 2> scores = {0, 0};
+    std::bitset<BOARD_SIZE> visited{0x0};
+
+    for (uint8_t i = 0; i < 2; i++) {
+        auto player_tokens = tokens[i];
+        for (uint8_t j = 0; j < BOARD_SIZE; j++) {
+            scores[0] += dfs(player_tokens, j, 1, visited);
+        }
+    }
+
+    bool player_turn = tokens[0].count() == tokens[1].count();
+
+    return {true, (-1 * (player_turn ^ turn)) * (scores[0] - scores[1]) / (BOARD_SIZE * 7)};
 }
