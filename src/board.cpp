@@ -3,9 +3,10 @@
 #include <cstdio>
 #include <stdexcept>
 
-#define RED "\033[1;91m"
-#define YELLOW "\033[1;93m"
-#define CLEAR "\033[1;0m"
+#define RED "\033[91m"
+#define BOLD_UNDERLINE "\033[1;4m"
+#define YELLOW "\033[93m"
+#define CLEAR "\033[0m"
 
 static const std::array<const std::string, 3> cell_values = {"   ", RED " o " CLEAR, YELLOW " o " CLEAR};
 
@@ -66,9 +67,9 @@ void debug_print(std::bitset<56> board) {
     std::printf("\n\n");
 }
 
-uint8_t Board::check_status() const {
+uint8_t Board::check_status() {
 
-    if (turn_count < 1) return NOT_FINISHED;
+    if (turn_count < 7) return NOT_FINISHED;
     if (turn_count == BOARD_SIZE) return TIE; 
 
     auto player_tokens = tokens[!(turn_count % 2)];
@@ -83,7 +84,10 @@ uint8_t Board::check_status() const {
     mask = 0xf;
     for (int i = 0; i < BOARD_Y; i++) {
         for (int j = 0; j < BOARD_X - 3; j++) {
-            if ((player_tokens & mask) == mask) return FINISHED;
+            if ((player_tokens & mask) == mask) {
+                winning_mask = mask;
+                return FINISHED;
+            }
 
             mask <<= 1;
         }
@@ -95,7 +99,10 @@ uint8_t Board::check_status() const {
     mask = 0x01010101;
     loop_count = (BOARD_Y - 3) * BOARD_X;
     for (int i = 0; i < loop_count; i++) {
-        if ((player_tokens & mask) == mask) return FINISHED;
+        if ((player_tokens & mask) == mask) {
+            winning_mask = mask;
+            return FINISHED;
+        }
 
         mask <<= 1;
     }
@@ -105,7 +112,10 @@ uint8_t Board::check_status() const {
     mask = 0x01020408;
     for (int i = 0; i < BOARD_Y - 3; i++) {
         for (int j = 0; j < BOARD_X - 3; j++) {
-            if ((player_tokens & mask) == mask) return FINISHED;
+            if ((player_tokens & mask) == mask) {
+                winning_mask = mask;
+                return FINISHED;
+            }
 
             mask <<= 1;
         }
@@ -117,7 +127,10 @@ uint8_t Board::check_status() const {
     mask = 0x08040201;
     for (int i = 0; i < BOARD_Y - 3; i++) {
         for (int j = 0; j < BOARD_X - 3; j++) {
-            if ((player_tokens & mask) == mask) return FINISHED;
+            if ((player_tokens & mask) == mask) {
+                winning_mask = mask;
+                return FINISHED;
+            }
 
             mask <<= 1;
         }
@@ -139,8 +152,10 @@ void Board::print_board() const {
     for (int i = 0; i < BOARD_SIZE; i++) {
         std::printf("%s", i % BOARD_X == 0 ? "\n" : "|");
 
+        if (winning_mask[i]) std::printf(BOLD_UNDERLINE);
         int lookup_value = odd_tokens[i] + even_tokens[i] * 2;
         std::printf("%s", cell_values[lookup_value].c_str());
+        if (winning_mask[i]) std::printf(CLEAR);
     }
 
     std::printf("\n\n");

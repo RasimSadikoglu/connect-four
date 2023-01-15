@@ -19,9 +19,10 @@ AIPlayer::AIPlayer():
     std::cout << "\033[0J";
 
     std::cout << "Choose a heuristic:\n";
-    std::cout << "1) Make closest best move\n";
-    std::cout << "2) ???\n";
-    std::cout << "3) ???\n";
+    std::cout << "1) Just look ahead\n";
+    std::cout << "2) Most neighbor is best\n";
+    std::cout << "3) Forests are good\n";
+    std::cout << "Option: ";
     int h;
     std::cin >> h;
     std::cout << "\033[u";
@@ -183,7 +184,7 @@ std::pair<bool, double> AIPlayer::heuristic_2() const {
 
     bool player_turn = tokens[0].count() == tokens[1].count();
 
-    return {true, (-1 * (player_turn ^ turn)) * (scores[0] - scores[1]) / (BOARD_SIZE)};
+    return {true, (-1 * (player_turn ^ turn)) * (scores[0] - scores[1]) / (BOARD_SIZE * 8)};
 }
 
 std::pair<bool, double> AIPlayer::heuristic_3() const {

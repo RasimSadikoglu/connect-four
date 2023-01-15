@@ -23,6 +23,8 @@ void Game::start_game() {
         board->print_board();
     }
 
+    board->print_board();
+
     uint8_t status = board->check_status();
 
     if (status == TIE) {
